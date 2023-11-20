@@ -27,11 +27,33 @@ white_space = "     "
 path = ""
 original_path = ""
 
+# All variables needed for the final file
+all_phone_numbers = []
+all_emails = []
+all_names = []
+all_links = []
+all_descs = []
+all_comments = []
+all_scripts = []
+all_tag_names = []
+
+# For organizing all output into a single file
+main_path = os.getcwd() + "\\" + "a_script_output" + "\\" + "ALL_OUTPUT.txt"
+
 
 # A method to check files inside a directory
 def scrape_folders():
+    # Global Variables
     global white_space
     global path
+    global all_phone_numbers
+    global all_emails
+    global all_names
+    global all_links
+    global all_descs
+    global all_comments
+    global all_scripts
+    global all_tag_names
 
     list_of_files = os.listdir(path)
     amount_of_files = len(list_of_files)
@@ -74,33 +96,57 @@ def scrape_folders():
                 links = soup.find_all('a', href=True)
                 descriptions = soup.find('meta', {'name': 'description'})
                 description = descriptions.get('content') if descriptions else None
+
                 # Common phone number formats
                 phone_number_pattern = re.compile(r'\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b')
                 phone_numbers = re.findall(phone_number_pattern, html)
+
                 # Get people names with spaCy
                 text_processed = nlp(text)
                 names = [ent.text for ent in text_processed.ents if ent.label_ == 'PERSON']
 
+                # Get Email addresses with regex
+                emails = re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b')
+                email_addresses = re.findall(emails, html)
+
                 # Spit out all of the comments/scripts into a separate txt file
                 output_file_path = directory + "_output.txt"
 
-                # Write to file
+                # Write to files
                 with open(output_file_path, 'w', encoding='utf-8') as output_file:
                     # IN ORDER OF MOST IMPORTANT
                     for number in phone_numbers:
                         output_file.write(number + '\n')
+                        all_phone_numbers.append(number)
+
+                    for email_address in email_addresses:
+                        output_file.write(email_address + '\n')
+                        all_emails.append(email_address)
+
                     for name in names:
                         output_file.write(name + '\n')
+                        all_names.append(name)
+
                     for link in links:
                         output_file.write(link['href'] + '\n')
+                        all_links.append(link['href'])
+
                     # Description
                     output_file.write(str(description))
+                    all_descs.append(str(description))
+
                     for comment in comments:
                         output_file.write(str(comment) + '\n')
+                        all_comments.append(str(comment))
+
                     for script in scripts:
                         output_file.write(str(script) + '\n')
+                        all_scripts.append(str(script))
+
                     for tag_name in tag_names:
                         output_file.write(tag_name + '\n')
+                        all_tag_names.append(tag_name)
+
 
             if counter == amount_of_files:
                 white_space = white_space[:-5]
@@ -110,15 +156,37 @@ def scrape_folders():
 # Goes through all of the directories and checks inside them for files
 
 # For printing files to verify directories
-debug_directory = False
+debug_directory = True
 
 # DRIVER CODE
 for file in local_files:
     if file == 'main.py' or file == '.idea':
         continue
+    # Delete the main output file if it exists
+    elif file == 'a_script_output' and os.path.exists(main_path):
+        os.remove(main_path)
     else:
         if debug_directory:
             print(file)
         path = file
         original_path = path
         scrape_folders()
+
+# Sort all the output in the final file
+with open(main_path, 'a', encoding='utf-8') as main_output_file:
+    for numbers in all_phone_numbers:
+        main_output_file.write(numbers + '\n')
+    for emails in all_emails:
+        main_output_file.write(emails + '\n')
+    for name in all_names:
+        main_output_file.write(name + '\n')
+    for link in all_links:
+        main_output_file.write(link + '\n')
+    for description in all_descs:
+        main_output_file.write(description + '\n')
+    for comment in all_comments:
+        main_output_file.write(comment + '\n')
+    for script in all_scripts:
+        main_output_file.write(script + '\n')
+    for tags in all_tag_names:
+        main_output_file.write(tags + '\n')
